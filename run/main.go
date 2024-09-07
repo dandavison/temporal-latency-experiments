@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"github.com/dandavison/temporal-latency-experiments/tle"
+	"github.com/dandavison/tle/experiments/signalquerypoll"
 	"github.com/dandavison/tle/experiments/update"
 	"go.temporal.io/sdk/client"
 	sdklog "go.temporal.io/sdk/log"
@@ -16,10 +17,12 @@ import (
 
 var experiments = map[string]func(client.Client, sdklog.Logger, int) (tle.Results, error){
 	"update":          update.Run,
+	"signalquerypoll": signalquerypoll.Run,
 }
 
 var workflows = map[string]interface{}{
 	"update":          update.MyWorkflow,
+	"signalquerypoll": signalquerypoll.MyWorkflow,
 }
 
 func main() {
