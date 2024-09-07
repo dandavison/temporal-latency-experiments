@@ -1,0 +1,15 @@
+[project]
+name = "viz"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "altair>=5.4.1",
+    "pandas>=2.2.2",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pdbpp>=0.10.3",
+]
