@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	. "github.com/dandavison/temporal-latency-experiments/must"
 	"github.com/dandavison/temporal-latency-experiments/tle"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -19,46 +20,36 @@ const (
 )
 
 // Execute an update (i.e., send it and wait for the result).
-func Run(c client.Client, l sdklog.Logger, iterations int) (tle.Results, error) {
+func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	ctx := context.Background()
-	_, err := c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+	Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
 		TaskQueue:             tle.TaskQueue,
 		WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-	}, MyWorkflow)
-	if err != nil {
-		tle.Fatal(l, "Failed to start workflow", err)
-	}
+	}, MyWorkflow))
 
 	latencies := []int64{}
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
-		u, err := c.UpdateWorkflow(ctx, client.UpdateWorkflowOptions{
+		u := Must(c.UpdateWorkflow(ctx, client.UpdateWorkflowOptions{
 			WorkflowID:   workflowID,
 			UpdateName:   UpdateName,
 			UpdateID:     strconv.Itoa(i),
 			WaitForStage: client.WorkflowUpdateStageCompleted,
-		})
-		if err != nil {
-			tle.Fatal(l, "Failed to start update", err)
-		}
+		}))
 
 		var updateResult int
-		if err = u.Get(ctx, &updateResult); err != nil {
-			tle.Fatal(l, "Failed to fetch update result", err)
-		}
+		Must1(u.Get(ctx, &updateResult))
 
 		latency := time.Since(start).Nanoseconds()
 		latencies = append(latencies, latency)
 
 	}
-	if err := c.SignalWorkflow(ctx, workflowID, "", DoneSignalName, nil); err != nil {
-		tle.Fatal(l, "Failed to signal workflow", err)
-	}
+	Must1(c.SignalWorkflow(ctx, workflowID, "", DoneSignalName, nil))
 
 	return tle.Results{
 		LatenciesNs: latencies,
-	}, nil
+	}
 }
 
 func MyWorkflow(ctx workflow.Context) (int, error) {

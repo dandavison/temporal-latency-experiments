@@ -5,6 +5,7 @@ import (
 
 	"time"
 
+	. "github.com/dandavison/temporal-latency-experiments/must"
 	"github.com/dandavison/temporal-latency-experiments/tle"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
@@ -21,37 +22,25 @@ const (
 
 // Send a signal and immediately start executing queries until a query result is
 // received indicating that it read the signal's writes to local workflow state.
-func Run(c client.Client, l sdklog.Logger, iterations int) (tle.Results, error) {
+func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	ctx := context.Background()
-	_, err := c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+	Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 		ID:                    workflowID,
 		TaskQueue:             tle.TaskQueue,
 		WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-	}, MyWorkflow)
-	if err != nil {
-		tle.Fatal(l, "Failed to start workflow", err)
-	}
+	}, MyWorkflow))
 
 	latencies := []int64{}
 	polls := []int{}
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
-		go func() {
-			err := c.SignalWorkflow(ctx, workflowID, "", SignalName, i)
-			if err != nil {
-				tle.Fatal(l, "Failed to send signal", err)
-			}
-		}()
+
+		go Must1(c.SignalWorkflow(ctx, workflowID, "", SignalName, i))
 
 		for j := 1; ; j++ {
-			queryResult, err := c.QueryWorkflow(ctx, workflowID, "", QueryName)
-			if err != nil {
-				tle.Fatal(l, "Failed to query workflow", err)
-			}
+			queryResult := Must(c.QueryWorkflow(ctx, workflowID, "", QueryName))
 			var result int
-			if err := queryResult.Get(&result); err != nil {
-				tle.Fatal(l, "Failed to get query result", err)
-			}
+			Must1(queryResult.Get(&result))
 			if result == i+1 {
 				polls = append(polls, j)
 				break
@@ -60,14 +49,12 @@ func Run(c client.Client, l sdklog.Logger, iterations int) (tle.Results, error) 
 		latency := time.Since(start).Nanoseconds()
 		latencies = append(latencies, latency)
 	}
-	if err := c.SignalWorkflow(ctx, workflowID, "", DoneSignalName, nil); err != nil {
-		tle.Fatal(l, "Failed to signal workflow", err)
-	}
+	Must1(c.SignalWorkflow(ctx, workflowID, "", DoneSignalName, nil))
 
 	return tle.Results{
 		LatenciesNs: latencies,
 		Polls:       polls,
-	}, nil
+	}
 }
 
 func MyWorkflow(ctx workflow.Context) (int, error) {
