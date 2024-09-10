@@ -13,6 +13,14 @@ class Experiment:
     cloud: bool
     latencies: List[int]
 
+    @property
+    def display_name(self) -> str:
+        return f"{self.name} ({'cloud' if self.cloud else 'local'})"
+
+    @property
+    def html_name(self) -> str:
+        return f"results-{'cloud' if self.cloud else 'local'}.html"
+
 
 def main() -> None:
     src_root = Path("../run/experiments")
@@ -22,11 +30,10 @@ def main() -> None:
     for experiment in experiments:
         dst_dir = dst_root / experiment.name
         dst_dir.mkdir(parents=True, exist_ok=True)
-        file_name = "index-cloud.html" if experiment.cloud else "index-local.html"
-        create_per_experiment_page(experiment).save(dst_dir / file_name)
+        create_per_experiment_page(experiment).save(dst_dir / experiment.html_name)
 
     create_combined_experiments_page(experiments).save(
-        dst_root / "combined_density.html"
+        dst_root / "combined-results.html"
     )
 
 
@@ -46,7 +53,7 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
             y=alt.Y("count()", title=None),
         )
         .properties(
-            title=f"{experiment.name} p50: {p50:.0f}ms, p90: {p90:.0f}ms, p99: {p99:.0f}ms"
+            title=f"{experiment.display_name} p50: {p50:.0f}ms, p90: {p90:.0f}ms, p99: {p99:.0f}ms"
         )
     )
 
@@ -61,7 +68,7 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
             x=alt.X("LatencyMs:Q", title="Latency (ms)"),
             y=alt.Y("density:Q", title=None),
         )
-        .properties(title=f"{experiment.name} Density Plot")
+        .properties(title=f"{experiment.display_name} Density Plot")
     )
 
     line_plot = (
@@ -71,7 +78,7 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
             x=alt.X("index:Q", title="Sequence"),
             y=alt.Y("LatencyMs:Q", title="Latency (ms)"),
         )
-        .properties(title=f"{experiment.name} Latency Sequence")
+        .properties(title=f"{experiment.display_name} Latency Sequence")
     )
 
     return alt.vconcat(histogram, density, line_plot)
@@ -83,7 +90,7 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.Chart
         df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
         df["LatencyMs"] = df["LatencyNs"] / 1e6
         p99 = df["LatencyMs"].quantile(0.99)
-        df["Experiment"] = f"{experiment.name} p99: {p99:.0f}ms"
+        df["Experiment"] = f"{experiment.display_name} p99: {p99:.0f}ms"
         combined_data.append(df)
 
     combined_df = pd.concat(combined_data)
