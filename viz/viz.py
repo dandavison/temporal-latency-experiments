@@ -10,6 +10,7 @@ import pandas as pd
 @dataclass
 class Experiment:
     name: str
+    cloud: bool
     latencies: List[int]
 
 
@@ -21,7 +22,8 @@ def main() -> None:
     for experiment in experiments:
         dst_dir = dst_root / experiment.name
         dst_dir.mkdir(parents=True, exist_ok=True)
-        create_per_experiment_page(experiment).save(dst_dir / "index.html")
+        file_name = "index-cloud.html" if experiment.cloud else "index-local.html"
+        create_per_experiment_page(experiment).save(dst_dir / file_name)
 
     create_combined_experiments_page(experiments).save(
         dst_root / "combined_density.html"
@@ -107,13 +109,21 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.Chart
 def collect_experiments(src_root: Path) -> Iterator[Experiment]:
     for experiment_path in src_root.iterdir():
         if experiment_path.is_dir():
-            results_path = experiment_path / "results.json"
-            if results_path.exists():
-                with open(results_path, "r") as f:
-                    results = json.load(f)
-                    latencies = results.get("latenciesNs", [])
-                    if latencies:
-                        yield Experiment(name=experiment_path.name, latencies=latencies)
+            for file_name, cloud in [
+                ("results-cloud.json", True),
+                ("results-local.json", False),
+            ]:
+                results_path = experiment_path / file_name
+                if results_path.exists():
+                    with open(results_path, "r") as f:
+                        results = json.load(f)
+                        latencies = results.get("latenciesNs", [])
+                        if latencies:
+                            yield Experiment(
+                                name=experiment_path.name,
+                                cloud=cloud,
+                                latencies=latencies,
+                            )
 
 
 if __name__ == "__main__":
