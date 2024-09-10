@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -30,8 +31,8 @@ func main() {
 	l := sdklog.NewStructuredLogger(slog.New(slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{
 		Level: slog.LevelWarn,
 	})))
-	run, workflow, iterations := parseArguments()
-	c := Must(client.Dial(client.Options{Logger: l}))
+	run, workflow, iterations, cc := parseArguments()
+	c := makeClient(cc, l)
 	defer c.Close()
 	wo := startWorker(c, workflow)
 	defer wo.Stop()
@@ -41,6 +42,21 @@ func main() {
 	fmt.Println(string(Must(json.MarshalIndent(r, "", "  "))))
 }
 
+func makeClient(cc *ClientConfig, l sdklog.Logger) client.Client {
+	if cc == nil {
+		return Must(client.Dial(client.Options{Logger: l}))
+	}
+	cert := Must(tls.LoadX509KeyPair(cc.ClientCertPath, cc.ClientKeyPath))
+	return Must(client.Dial(client.Options{
+		HostPort:  cc.HostPort,
+		Namespace: cc.Namespace,
+		ConnectionOptions: client.ConnectionOptions{
+			TLS: &tls.Config{Certificates: []tls.Certificate{cert}},
+		},
+		Logger: l,
+	}))
+}
+
 func startWorker(c client.Client, workflow interface{}) worker.Worker {
 	wo := worker.New(c, tle.TaskQueue, worker.Options{})
 	wo.RegisterWorkflow(workflow)
@@ -48,10 +64,31 @@ func startWorker(c client.Client, workflow interface{}) worker.Worker {
 	return wo
 }
 
-func parseArguments() (func(client.Client, sdklog.Logger, int) tle.Results, interface{}, int) {
+type ClientConfig struct {
+	ClientKeyPath  string
+	ClientCertPath string
+	HostPort       string
+	Namespace      string
+}
+
+func parseArguments() (func(client.Client, sdklog.Logger, int) tle.Results, interface{}, int, *ClientConfig) {
 	iterations := flag.Int("iterations", 1, "Number of iterations")
 	experimentName := flag.String("experiment", "", "Experiment to run")
+
+	var cc = new(ClientConfig)
+	flag.StringVar(&cc.ClientKeyPath, "client-key", "", "Path to client key")
+	flag.StringVar(&cc.ClientCertPath, "client-cert", "", "Path to client cert")
+	flag.StringVar(&cc.HostPort, "address", "", "Address of the Temporal server")
+	flag.StringVar(&cc.Namespace, "namespace", "", "Namespace of the Temporal server")
+
 	flag.Parse()
+
+	if cc.IsZero() {
+		cc = nil
+	} else if cc.ClientKeyPath == "" || cc.ClientCertPath == "" || cc.HostPort == "" || cc.Namespace == "" {
+		panic(fmt.Sprintf("If any client config flag is set, all must be set: %+v", cc))
+	}
+
 	if *experimentName == "" {
 		panic("Experiment name is required")
 	}
@@ -64,5 +101,9 @@ func parseArguments() (func(client.Client, sdklog.Logger, int) tle.Results, inte
 		panic("Workflow not found")
 	}
 	fmt.Fprintf(os.Stderr, "Running experiment %s\n", *experimentName)
-	return run, workflow, *iterations
+	return run, workflow, *iterations, cc
+}
+
+func (c *ClientConfig) IsZero() bool {
+	return c.ClientKeyPath == "" && c.ClientCertPath == "" && c.HostPort == "" && c.Namespace == ""
 }
