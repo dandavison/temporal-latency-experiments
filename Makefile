@@ -26,4 +26,7 @@ run-cloud:
 viz:
 	cd viz && uv run viz.py
 
-.PHONY: run run-cloud viz
+setup:
+	cd viz && uv sync
+
+.PHONY: run run-cloud viz setup
