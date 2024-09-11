@@ -53,7 +53,7 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
             y=alt.Y("count()", title=None),
         )
         .properties(
-            title=f"{experiment.display_name} p50: {p50:.0f}ms, p90: {p90:.0f}ms, p99: {p99:.0f}ms"
+            title=f"{experiment.display_name} p50: {p50:.1f}ms, p90: {p90:.1f}ms, p99: {p99:.1f}ms"
         )
     )
 
@@ -90,7 +90,7 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.Chart
         df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
         df["LatencyMs"] = df["LatencyNs"] / 1e6
         p90 = df["LatencyMs"].quantile(0.90)
-        df["Experiment"] = f"{experiment.display_name} p90: {p90:.0f}ms"
+        df["Experiment"] = f"{experiment.display_name} p90: {p90:.1f}ms"
         combined_data.append(df)
 
     combined_df = pd.concat(combined_data)

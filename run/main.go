@@ -45,7 +45,7 @@ func main() {
 
 	r := run(c, l, iterations)
 
-	fmt.Fprintf(os.Stderr, "p90: %.2f\n", float64(tle.Quantile(r.LatenciesNs, 0.9))/1e6)
+	fmt.Fprintf(os.Stderr, "p90: %.1f\n", float64(tle.Quantile(r.LatenciesNs, 0.9))/1e6)
 
 	fmt.Println(string(Must(json.MarshalIndent(r, "", "  "))))
 }
