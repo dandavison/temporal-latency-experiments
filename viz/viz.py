@@ -89,8 +89,8 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.Chart
     for experiment in experiments:
         df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
         df["LatencyMs"] = df["LatencyNs"] / 1e6
-        p99 = df["LatencyMs"].quantile(0.99)
-        df["Experiment"] = f"{experiment.display_name} p99: {p99:.0f}ms"
+        p90 = df["LatencyMs"].quantile(0.90)
+        df["Experiment"] = f"{experiment.display_name} p90: {p90:.0f}ms"
         combined_data.append(df)
 
     combined_df = pd.concat(combined_data)
