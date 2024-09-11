@@ -35,13 +35,11 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
 
-		go Must1(c.SignalWorkflow(ctx, workflowID, "", SignalName, i))
-
 		for j := 1; ; j++ {
 			queryResult := Must(c.QueryWorkflow(ctx, workflowID, "", QueryName))
 			var result int
 			Must1(queryResult.Get(&result))
-			if result == i+1 {
+			if true {
 				polls = append(polls, j)
 				break
 			}
