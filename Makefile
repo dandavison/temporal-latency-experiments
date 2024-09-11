@@ -1,7 +1,7 @@
 run:
 	cd run && \
 	for experiment in update signalquerypoll; do \
-		go run main.go --iterations 2000 --experiment $$experiment > experiments/$$experiment/results.json; \
+		go run main.go --iterations 2000 --experiment $$experiment > experiments/$$experiment/results-local.json; \
 	done
 
 run-cloud:
@@ -14,7 +14,7 @@ run-cloud:
 			--namespace sdk-ci.a2dd6 \
 			--client-cert /tmp/client.crt \
 			--client-key /tmp/client.key \
-			> experiments/$$experiment/results.json; \
+			> experiments/$$experiment/results-cloud.json; \
 	done
 
 viz:
