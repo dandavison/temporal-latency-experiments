@@ -1,14 +1,20 @@
+ITERATIONS=2000
+EXPERIMENTS=query signal signalquerypoll update
+
 run:
 	cd run && \
-	for experiment in update signalquerypoll; do \
-		go run main.go --iterations 2000 --experiment $$experiment > experiments/$$experiment/results-local.json; \
+	for experiment in $(EXPERIMENTS); do \
+		go run main.go \
+			--iterations $(ITERATIONS) \
+			--experiment $$experiment \
+			> experiments/$$experiment/results-local.json; \
 	done
 
 run-cloud:
 	cd run && \
-	for experiment in update signalquerypoll; do \
+	for experiment in $(EXPERIMENTS); do \
 		go run main.go \
-			--iterations 2000 \
+			--iterations $(ITERATIONS) \
 			--experiment $$experiment \
 			--address sdk-ci.a2dd6.tmprl.cloud:7233 \
 			--namespace sdk-ci.a2dd6 \
@@ -20,4 +26,4 @@ run-cloud:
 viz:
 	cd viz && uv run viz.py
 
-.PHONY: run viz
+.PHONY: run run-cloud viz
