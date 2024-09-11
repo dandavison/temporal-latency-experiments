@@ -15,10 +15,10 @@ class Experiment:
 
     @property
     def display_name(self) -> str:
-        return f"{self.name} ({'cloud' if self.cloud else 'local'})"
+        return f"{self.name} ({'cloud' if self.cloud else 'localhost, in-memory'})"
 
     @property
-    def html_name(self) -> str:
+    def html_filename(self) -> str:
         return f"results-{'cloud' if self.cloud else 'local'}.html"
 
 
@@ -30,7 +30,7 @@ def main() -> None:
     for experiment in experiments:
         dst_dir = dst_root / experiment.name
         dst_dir.mkdir(parents=True, exist_ok=True)
-        create_per_experiment_page(experiment).save(dst_dir / experiment.html_name)
+        create_per_experiment_page(experiment).save(dst_dir / experiment.html_filename)
 
     create_combined_experiments_page(experiments).save(
         dst_root / "combined-results.html"
@@ -86,11 +86,10 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
 
 def create_combined_experiments_page(experiments: List[Experiment]) -> alt.Chart:
     combined_data = []
-    for experiment in experiments:
+    for experiment in sorted(experiments, key=lambda x: (x.cloud, x.name)):
         df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
         df["LatencyMs"] = df["LatencyNs"] / 1e6
-        p90 = df["LatencyMs"].quantile(0.90)
-        df["Experiment"] = f"{experiment.display_name} p90: {p90:.1f}ms"
+        df["Experiment"] = f"{experiment.display_name}"
         combined_data.append(df)
 
     combined_df = pd.concat(combined_data)
