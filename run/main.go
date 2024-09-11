@@ -12,7 +12,7 @@ import (
 	"github.com/dandavison/temporal-latency-experiments/tle"
 	"github.com/dandavison/tle/experiments/query"
 	"github.com/dandavison/tle/experiments/signal"
-	"github.com/dandavison/tle/experiments/signalquerypoll"
+	"github.com/dandavison/tle/experiments/signalquery"
 	"github.com/dandavison/tle/experiments/update"
 	"go.temporal.io/sdk/client"
 	sdklog "go.temporal.io/sdk/log"
@@ -20,17 +20,17 @@ import (
 )
 
 var experiments = map[string]func(client.Client, sdklog.Logger, int) tle.Results{
-	"query":           query.Run,
-	"signal":          signal.Run,
-	"signalquerypoll": signalquerypoll.Run,
-	"update":          update.Run,
+	"query":       query.Run,
+	"signal":      signal.Run,
+	"signalquery": signalquery.Run,
+	"update":      update.Run,
 }
 
 var workflows = map[string]interface{}{
-	"query":           signalquerypoll.MyWorkflow,
-	"signal":          signalquerypoll.MyWorkflow,
-	"signalquerypoll": signalquerypoll.MyWorkflow,
-	"update":          update.MyWorkflow,
+	"query":       signalquery.MyWorkflow,
+	"signal":      signalquery.MyWorkflow,
+	"signalquery": signalquery.MyWorkflow,
+	"update":      update.MyWorkflow,
 }
 
 func main() {

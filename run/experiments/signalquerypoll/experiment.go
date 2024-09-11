@@ -5,12 +5,12 @@ import (
 
 	"time"
 
+	"github.com/dandavison/temporal-latency-experiments/experiments/signalquery"
 	. "github.com/dandavison/temporal-latency-experiments/must"
 	"github.com/dandavison/temporal-latency-experiments/tle"
 	enumspb "go.temporal.io/api/enums/v1"
 	"go.temporal.io/sdk/client"
 	sdklog "go.temporal.io/sdk/log"
-	"go.temporal.io/sdk/workflow"
 )
 
 const (
@@ -28,7 +28,7 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		ID:                    workflowID,
 		TaskQueue:             tle.TaskQueue,
 		WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-	}, MyWorkflow))
+	}, signalquery.MyWorkflow))
 
 	latencies := []int64{}
 	polls := []int{}
@@ -55,32 +55,4 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		LatenciesNs: latencies,
 		Polls:       polls,
 	}
-}
-
-func MyWorkflow(ctx workflow.Context) (int, error) {
-	counter := 0
-
-	workflow.SetQueryHandler(ctx, QueryName, func() (int, error) {
-		return counter, nil
-	})
-
-	ch := workflow.GetSignalChannel(ctx, SignalName)
-
-	sel := workflow.NewSelector(ctx)
-	sel.AddReceive(ch, func(c workflow.ReceiveChannel, more bool) {
-		var signal int
-		c.Receive(ctx, &signal)
-		counter++
-	})
-
-	doneCh := workflow.GetSignalChannel(ctx, DoneSignalName)
-
-	for {
-		sel.Select(ctx)
-		if doneCh.ReceiveAsync(nil) {
-			break
-		}
-	}
-
-	return counter, nil
 }
