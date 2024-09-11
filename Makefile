@@ -3,6 +3,7 @@ EXPERIMENTS=query signal signalquery update
 
 run:
 	cd run && \
+	set -e && \
 	for experiment in $(EXPERIMENTS); do \
 		go run main.go \
 			--iterations $(ITERATIONS) \
@@ -12,6 +13,7 @@ run:
 
 run-cloud:
 	cd run && \
+	set -e && \
 	for experiment in $(EXPERIMENTS); do \
 		go run main.go \
 			--iterations $(ITERATIONS) \
