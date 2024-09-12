@@ -141,14 +141,16 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConc
             .properties(title=title)
         )
 
-    cloud_density = create_density_plot(
-        combined_df[combined_df["Cloud"] == "Cloud"], "cloud"
-    )
-    local_density = create_density_plot(
-        combined_df[combined_df["Cloud"] == "Local"], "localhost in-memory sqlite"
-    )
+    charts = []
+    for key, display_name in [
+        ("Cloud", "cloud"),
+        ("Local", "localhost in-memory sqlite"),
+    ]:
+        df = combined_df[combined_df["Cloud"] == key]
+        if len(df):
+            charts.append(create_density_plot(df, display_name))
 
-    return alt.vconcat(cloud_density, local_density).resolve_scale(color="independent")
+    return alt.vconcat(*charts).resolve_scale(color="independent")
 
 
 def collect_experiments(src_root: Path) -> Iterator[Experiment]:
