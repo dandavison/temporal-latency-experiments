@@ -29,6 +29,7 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	}, MyWorkflow))
 
 	latencies := []int64{}
+	wfts := []int{}
 	for i := 0; i < iterations; i++ {
 		start := time.Now()
 		u := Must(c.UpdateWorkflow(ctx, client.UpdateWorkflowOptions{
@@ -43,12 +44,13 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 
 		latency := time.Since(start).Nanoseconds()
 		latencies = append(latencies, latency)
-
+		wfts = append(wfts, tle.CountWorkflowTasks(c, workflowID, ""))
 	}
 	Must1(c.SignalWorkflow(ctx, workflowID, "", DoneSignalName, nil))
 
 	return tle.Results{
 		LatenciesNs: latencies,
+		Wfts:        wfts,
 	}
 }
 
