@@ -27,7 +27,8 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	latencies := []int64{}
 	wfts := []int{}
 	for i := 0; i < iterations; i++ {
-		if i%2000 == 0 {
+		ii := i % 2000
+		if ii == 0 {
 			Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
 				ID:                    WorkflowID,
 				TaskQueue:             tle.TaskQueue,
@@ -41,7 +42,7 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		queryResult := Must(c.QueryWorkflow(ctx, WorkflowID, "", QueryName))
 		var result int
 		Must1(queryResult.Get(&result))
-		if result != i+1 {
+		if result != ii+1 {
 			panic("query did not read signal's write")
 		}
 
