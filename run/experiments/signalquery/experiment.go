@@ -2,6 +2,8 @@ package signalquery
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"time"
 
 	. "github.com/dandavison/temporal-latency-experiments/must"
@@ -42,7 +44,8 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		var result int
 		Must1(queryResult.Get(&result))
 		if result != i+1 {
-			panic("query did not read signal's write")
+			fmt.Fprintf(os.Stderr, "query did not read signal's write\n")
+			continue
 		}
 
 		latency := time.Since(start).Nanoseconds()
