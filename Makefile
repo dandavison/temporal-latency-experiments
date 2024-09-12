@@ -1,4 +1,4 @@
-ITERATIONS=2000
+ITERATIONS=10000
 EXPERIMENTS=query signal signalquery update
 
 run:
