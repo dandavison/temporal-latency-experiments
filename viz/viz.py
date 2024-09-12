@@ -12,6 +12,7 @@ class Experiment:
     name: str
     cloud: bool
     latencies: List[int]
+    wfts: List[int]
 
     @property
     def display_name(self) -> str:
@@ -90,7 +91,18 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
         )
     )
 
-    return alt.vconcat(histogram, density, line_plot)
+    wft_df = pd.DataFrame(experiment.wfts, columns=["Wft"])
+    wft_plot = (
+        alt.Chart(wft_df.reset_index())
+        .mark_line()
+        .encode(
+            x=alt.X("index:Q", title="Sequence"),
+            y=alt.Y("Wft:Q", title="Wft"),
+        )
+        .properties(title=f"{experiment.display_name} ({experiment.env}) Wft Sequence")
+    )
+
+    return alt.vconcat(histogram, density, line_plot, wft_plot)
 
 
 def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConcatChart:
@@ -151,11 +163,13 @@ def collect_experiments(src_root: Path) -> Iterator[Experiment]:
                     with open(results_path, "r") as f:
                         results = json.load(f)
                         latencies = results.get("latenciesNs", [])
-                        if latencies:
+                        wfts = results.get("wfts", [])
+                        if latencies and wfts:
                             yield Experiment(
                                 name=experiment_path.name,
                                 cloud=cloud,
                                 latencies=latencies,
+                                wfts=wfts,
                             )
 
 
