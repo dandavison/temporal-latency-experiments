@@ -31,7 +31,6 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 
 		latency := time.Since(start).Nanoseconds()
 		latencies = append(latencies, latency)
-		time.Sleep(100 * time.Millisecond)
 	}
 	Must1(c.SignalWorkflow(ctx, signalquery.WorkflowID, "", signalquery.DoneSignalName, nil))
 
