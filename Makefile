@@ -1,5 +1,5 @@
-ITERATIONS=10000
-EXPERIMENTS=query signal signalquery update
+ITERATIONS=200
+EXPERIMENTS=signalquery
 
 run:
 	cd run && \
