@@ -29,7 +29,7 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		start := time.Now()
 
 		queryResult := Must(c.QueryWorkflow(ctx, signalquery.WorkflowID, "", signalquery.QueryName))
-		var result int
+		var result signalquery.QueryResult
 		Must1(queryResult.Get(&result))
 
 		latency := time.Since(start).Nanoseconds()
