@@ -1,0 +1,38 @@
+cd run && \
+set -e && \
+for experiment in query signal signalquery update; do \
+	go run main.go \
+		--iterations 10000 \
+		--experiment $experiment \
+		--address sdk-ci.a2dd6.tmprl.cloud:7233 \
+		--namespace sdk-ci.a2dd6 \
+		--client-cert /tmp/client.crt \
+		--client-key /tmp/client.key \
+		> experiments/$experiment/results-cloud.json; \
+done
+Running experiment query
+{"time":"2024-09-13T04:38:52.748011459Z","level":"ERROR","msg":"Workflow panic","Namespace":"sdk-ci.a2dd6","TaskQueue":"tle","WorkerID":"714368@ip-172-31-3-43.us-west-2.compute.internal@","WorkflowType":"MyWorkflow","WorkflowID":"my-workflow-id","RunID":"d47db8bc-f357-4daa-813d-5b515f6aedb2","Attempt":1,"Error":"[TMPRL1100] nondeterministic workflow: missing replay command for WorkflowExecutionUpdateAccepted: (EventId:8, EventTime:(Seconds:1726201658, Nanos:589404569), EventType:WorkflowExecutionUpdateAccepted, Version:1302, TaskId:56418658, WorkerMayIgnore:false, Links:[len=0], Attributes:&{protocol_instance_id:\"0\"  accepted_request_message_id:\"0/request\"  accepted_request_sequencing_event_id:5  accepted_request:{meta:{update_id:\"0\"  identity:\"713823@ip-172-31-3-43.us-west-2.compute.internal@\"}  input:{header:{}  name:\"my-update\"}}})"}
+{"time":"2024-09-13T04:38:52.748068185Z","level":"WARN","msg":"Failed to process workflow task.","Namespace":"sdk-ci.a2dd6","TaskQueue":"tle","WorkerID":"714368@ip-172-31-3-43.us-west-2.compute.internal@","WorkflowType":"MyWorkflow","WorkflowID":"my-workflow-id","RunID":"d47db8bc-f357-4daa-813d-5b515f6aedb2","Attempt":1,"Error":"[TMPRL1100] nondeterministic workflow: missing replay command for WorkflowExecutionUpdateAccepted: (EventId:8, EventTime:(Seconds:1726201658, Nanos:589404569), EventType:WorkflowExecutionUpdateAccepted, Version:1302, TaskId:56418658, WorkerMayIgnore:false, Links:[len=0], Attributes:&{protocol_instance_id:\"0\"  accepted_request_message_id:\"0/request\"  accepted_request_sequencing_event_id:5  accepted_request:{meta:{update_id:\"0\"  identity:\"713823@ip-172-31-3-43.us-west-2.compute.internal@\"}  input:{header:{}  name:\"my-update\"}}})"}
+p90: 15.7
+Running experiment signal
+p90: 17.1
+Running experiment signalquery
+p90: 49.2
+Running experiment update
+p90: 29.9
+cd run && \
+set -e && \
+for experiment in query signal signalquery update; do \
+	go run main.go \
+		--iterations 10000 \
+		--experiment $experiment \
+		> experiments/$experiment/results-local.json; \
+done
+Running experiment query
+p90: 4.0
+Running experiment signal
+p90: 2.9
+Running experiment signalquery
+p90: 10.7
+Running experiment update
+p90: 8.7
