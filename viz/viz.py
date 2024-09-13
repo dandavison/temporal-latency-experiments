@@ -178,13 +178,13 @@ def create_presentation_page(
             axis=alt.AxisConfig(
                 gridColor="#444444",
                 domain=False,
-                tickColor="white",
-                labelColor="white",
-                titleColor="white",
+                tickColor="#DDDDDD",
+                labelColor="#DDDDDD",
+                titleColor="#DDDDDD",
             ),
             legend=alt.LegendConfig(
-                labelColor="white",
-                titleColor="white",
+                labelColor="#DDDDDD",
+                titleColor="#DDDDDD",
             ),
             axisRight=alt.AxisConfig(
                 gridColor="#444444",
