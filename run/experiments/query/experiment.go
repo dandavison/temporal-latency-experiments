@@ -15,17 +15,16 @@ import (
 // Send a query and wait for the response.
 func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	ctx := context.Background()
+	Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:                    signalquery.WorkflowID,
+		TaskQueue:             tle.TaskQueue,
+		WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+	}, signalquery.MyWorkflow))
 
 	latencies := []int64{}
 	wfts := []int{}
+	prevTotalWfts := 0
 	for i := 0; i < iterations; i++ {
-		if i%2000 == 0 {
-			Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
-				ID:                    signalquery.WorkflowID,
-				TaskQueue:             tle.TaskQueue,
-				WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-			}, signalquery.MyWorkflow))
-		}
 		start := time.Now()
 
 		queryResult := Must(c.QueryWorkflow(ctx, signalquery.WorkflowID, "", signalquery.QueryName))
@@ -34,6 +33,9 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 
 		latency := time.Since(start).Nanoseconds()
 		latencies = append(latencies, latency)
+		totalWfts := tle.CountWorkflowTasks(c, signalquery.WorkflowID, "")
+		wfts = append(wfts, totalWfts-prevTotalWfts)
+		prevTotalWfts = totalWfts
 	}
 	Must1(c.SignalWorkflow(ctx, signalquery.WorkflowID, "", signalquery.DoneSignalName, nil))
 

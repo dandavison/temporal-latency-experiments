@@ -22,18 +22,16 @@ const (
 // Execute an update (i.e., send it and wait for the result).
 func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	ctx := context.Background()
+	Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+		ID:                    workflowID,
+		TaskQueue:             tle.TaskQueue,
+		WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+	}, MyWorkflow))
 
 	latencies := []int64{}
 	wfts := []int{}
+	prevTotalWfts := 0
 	for i := 0; i < iterations; i++ {
-		if i%2000 == 0 {
-			Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
-				ID:                    workflowID,
-				TaskQueue:             tle.TaskQueue,
-				WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-			}, MyWorkflow))
-		}
-
 		start := time.Now()
 		u := Must(c.UpdateWorkflow(ctx, client.UpdateWorkflowOptions{
 			WorkflowID:   workflowID,
@@ -48,6 +46,9 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		latency := time.Since(start).Nanoseconds()
 		latencies = append(latencies, latency)
 
+		totalWfts := tle.CountWorkflowTasks(c, workflowID, "")
+		wfts = append(wfts, totalWfts-prevTotalWfts)
+		prevTotalWfts = totalWfts
 	}
 	Must1(c.SignalWorkflow(ctx, workflowID, "", DoneSignalName, nil))
 
