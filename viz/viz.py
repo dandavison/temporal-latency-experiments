@@ -164,15 +164,12 @@ def collect_experiments(src_root: Path) -> Iterator[Experiment]:
                 if results_path.exists():
                     with open(results_path, "r") as f:
                         results = json.load(f)
-                        latencies = results.get("latenciesNs", [])
-                        wfts = results.get("wfts", [])
-                        if latencies and wfts:
-                            yield Experiment(
-                                name=experiment_path.name,
-                                cloud=cloud,
-                                latencies=latencies,
-                                wfts=wfts,
-                            )
+                    yield Experiment(
+                        name=experiment_path.name,
+                        cloud=cloud,
+                        latencies=results.get("latenciesNs", []),
+                        wfts=results.get("wfts", []),
+                    )
 
 
 if __name__ == "__main__":
