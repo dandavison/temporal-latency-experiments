@@ -177,7 +177,7 @@ def create_presentation_page(
             background="#2E2E2E",
             axis=alt.AxisConfig(
                 gridColor="#444444",
-                domainColor="#444444",
+                domain=False,
                 tickColor="white",
                 labelColor="white",
                 titleColor="white",
@@ -191,6 +191,8 @@ def create_presentation_page(
                 domainColor="#444444",
             ),
         ).configure_view(stroke=None)
+    else:
+        chart = chart.configure(axis=alt.AxisConfig(domain=False))
 
     return chart
 
