@@ -46,6 +46,8 @@ def main() -> None:
         dst_root / "combined-results.html"
     )
 
+    create_presentation_page(experiments).save(dst_root / "presentation-results.html")
+
 
 def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
     df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
@@ -132,40 +134,10 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
 
 
 def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConcatChart:
-    combined_data = []
-
-    for experiment in experiments:
-        df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
-        df["LatencyMs"] = df["LatencyNs"] / 1e6
-        p90 = df["LatencyMs"].quantile(0.9)
-        display_name = experiment.display_name
-        df["Experiment"] = f"{display_name} p90 = {p90:.1f}ms"
-        df["Cloud"] = "Cloud" if experiment.cloud else "Local"
-        combined_data.append(df)
-
-    combined_df = pd.concat(combined_data)
+    combined_df = create_combined_data(experiments)
     x_scale = alt.Scale(
         domain=[combined_df["LatencyMs"].min(), combined_df["LatencyMs"].max()]
     )
-
-    def create_density_plot(df: pd.DataFrame, title: str) -> alt.Chart:
-        return (
-            alt.Chart(df)
-            .transform_density(
-                "LatencyMs",
-                groupby=["Experiment"],
-                as_=["LatencyMs", "density"],
-            )
-            .mark_line()
-            .encode(
-                x=alt.X("LatencyMs:Q", title="Latency (ms)", scale=x_scale),
-                y=alt.Y(
-                    "density:Q", title=None, axis=alt.Axis(ticks=False, labels=False)
-                ),
-                color=alt.Color("Experiment:N", legend=alt.Legend(title="")),
-            )
-            .properties(title=title)
-        )
 
     charts = []
     for key, display_name in [
@@ -174,9 +146,66 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConc
     ]:
         df = combined_df[combined_df["Cloud"] == key]
         if len(df):
-            charts.append(create_density_plot(df, display_name))
+            charts.append(create_density_plot(df, display_name, x_scale))
 
     return alt.vconcat(*charts).resolve_scale(color="independent")
+
+
+def create_presentation_page(experiments: List[Experiment]) -> alt.VConcatChart:
+    cloud_experiments = [exp for exp in experiments if exp.cloud]
+
+    combined_df = create_combined_data(
+        cloud_experiments, filter_names=["update", "signalquery"]
+    )
+    x_scale = alt.Scale(
+        domain=[combined_df["LatencyMs"].min(), combined_df["LatencyMs"].max()]
+    )
+
+    charts = []
+    for key, display_name in [
+        ("Cloud", "cloud"),
+    ]:
+        df = combined_df[combined_df["Cloud"] == key]
+        if len(df):
+            charts.append(create_density_plot(df, display_name, x_scale))
+
+    return alt.vconcat(*charts).resolve_scale(color="independent")
+
+
+def create_density_plot(df: pd.DataFrame, title: str, x_scale: alt.Scale) -> alt.Chart:
+    return (
+        alt.Chart(df)
+        .transform_density(
+            "LatencyMs",
+            groupby=["Experiment"],
+            as_=["LatencyMs", "density"],
+        )
+        .mark_line()
+        .encode(
+            x=alt.X("LatencyMs:Q", title="Latency (ms)", scale=x_scale),
+            y=alt.Y("density:Q", title=None, axis=alt.Axis(ticks=False, labels=False)),
+            color=alt.Color("Experiment:N", legend=alt.Legend(title="")),
+        )
+        .properties(title=title)
+    )
+
+
+def create_combined_data(
+    experiments: List[Experiment], filter_names: List[str] = None
+) -> pd.DataFrame:
+    combined_data = []
+
+    for experiment in experiments:
+        if filter_names is None or experiment.name in filter_names:
+            df = pd.DataFrame(experiment.latencies, columns=["LatencyNs"])
+            df["LatencyMs"] = df["LatencyNs"] / 1e6
+            p90 = df["LatencyMs"].quantile(0.9)
+            display_name = experiment.display_name
+            df["Experiment"] = f"{display_name} p90 = {p90:.1f}ms"
+            df["Cloud"] = "Cloud" if experiment.cloud else "Local"
+            combined_data.append(df)
+
+    return pd.concat(combined_data)
 
 
 def collect_experiments(src_root: Path) -> Iterator[Experiment]:
