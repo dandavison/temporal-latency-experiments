@@ -19,13 +19,12 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	latencies := []int64{}
 	wfts := []int{}
 	for i := 0; i < iterations; i++ {
-		if i%2000 == 0 {
-			Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
-				ID:                    signalquery.WorkflowID,
-				TaskQueue:             tle.TaskQueue,
-				WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-			}, signalquery.MyWorkflow))
-		}
+		Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+			ID:                    signalquery.WorkflowID,
+			TaskQueue:             tle.TaskQueue,
+			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+		}, signalquery.MyWorkflow))
+
 		start := time.Now()
 
 		Must1(c.SignalWorkflow(ctx, signalquery.WorkflowID, "", signalquery.SignalName, i))

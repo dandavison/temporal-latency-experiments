@@ -33,14 +33,12 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	queryTimes := []int64{}
 	wfts := []int{}
 	for i := 0; i < iterations; i++ {
-		ii := i % 2000
-		if ii == 0 {
-			Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
-				ID:                    WorkflowID,
-				TaskQueue:             tle.TaskQueue,
-				WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-			}, MyWorkflow))
-		}
+		Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+			ID:                    WorkflowID,
+			TaskQueue:             tle.TaskQueue,
+			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+		}, MyWorkflow))
+
 		start := time.Now()
 
 		go Must1(c.SignalWorkflow(ctx, WorkflowID, "", SignalName, i))
@@ -48,7 +46,7 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 		queryResult := Must(c.QueryWorkflow(ctx, WorkflowID, "", QueryName))
 		var result QueryResult
 		Must1(queryResult.Get(&result))
-		if result.Counter != ii+1 {
+		if result.Counter != 1 {
 			panic("query did not read signal's write")
 		}
 

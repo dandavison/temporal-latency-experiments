@@ -26,15 +26,14 @@ func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	latencies := []int64{}
 	wfts := []int{}
 	for i := 0; i < iterations; i++ {
-		if i%2000 == 0 {
-			Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
-				ID:                    workflowID,
-				TaskQueue:             tle.TaskQueue,
-				WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-			}, MyWorkflow))
-		}
+		Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+			ID:                    workflowID,
+			TaskQueue:             tle.TaskQueue,
+			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+		}, MyWorkflow))
 
 		start := time.Now()
+
 		u := Must(c.UpdateWorkflow(ctx, client.UpdateWorkflowOptions{
 			WorkflowID:   workflowID,
 			UpdateName:   UpdateName,

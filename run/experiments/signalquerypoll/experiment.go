@@ -24,16 +24,17 @@ const (
 // received indicating that it read the signal's writes to local workflow state.
 func Run(c client.Client, l sdklog.Logger, iterations int) tle.Results {
 	ctx := context.Background()
-	Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
-		ID:                    workflowID,
-		TaskQueue:             tle.TaskQueue,
-		WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
-	}, signalquery.MyWorkflow))
 
 	latencies := []int64{}
 	polls := []int{}
 	wfts := []int{}
 	for i := 0; i < iterations; i++ {
+		Must(c.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+			ID:                    workflowID,
+			TaskQueue:             tle.TaskQueue,
+			WorkflowIDReusePolicy: enumspb.WORKFLOW_ID_REUSE_POLICY_TERMINATE_IF_RUNNING,
+		}, signalquery.MyWorkflow))
+
 		start := time.Now()
 
 		go Must1(c.SignalWorkflow(ctx, workflowID, "", SignalName, i))
