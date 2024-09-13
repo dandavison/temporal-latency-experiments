@@ -13,8 +13,6 @@ class Experiment:
     cloud: bool
     latencies: List[int]
     wfts: List[int]
-    query_times: List[int]
-    signal_times: List[int]
 
     @property
     def display_name(self) -> str:
@@ -104,29 +102,7 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
         .properties(title=f"{experiment.display_name} ({experiment.env}) Wft Sequence")
     )
 
-    query_df = pd.DataFrame(
-        {
-            "Sequence": range(len(experiment.query_times)),
-            "QueryTime": experiment.query_times,
-        }
-    )
-
-    query_time_plot = (
-        alt.Chart(query_df)
-        .mark_line()
-        .encode(
-            x=alt.X("Sequence:Q", title="Sequence"),
-            y=alt.Y(
-                "QueryTime:Q", title="Query Time (ms)", axis=alt.Axis(titleColor="blue")
-            ),
-            color=alt.value("blue"),
-        )
-        .properties(
-            title=f"{experiment.display_name} ({experiment.env}) Query Time Sequence"
-        )
-    )
-
-    return alt.vconcat(histogram, density, line_plot, wft_plot, query_time_plot)
+    return alt.vconcat(histogram, density, line_plot, wft_plot)
 
 
 def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConcatChart:
@@ -193,8 +169,6 @@ def collect_experiments(src_root: Path) -> Iterator[Experiment]:
                         cloud=cloud,
                         latencies=results.get("latenciesNs", []),
                         wfts=results.get("wfts", []),
-                        query_times=results.get("queryTimes", []),
-                        signal_times=results.get("signalTimes", []),
                     )
 
 
