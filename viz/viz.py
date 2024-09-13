@@ -191,10 +191,10 @@ def collect_experiments(src_root: Path) -> Iterator[Experiment]:
                     yield Experiment(
                         name=experiment_path.name,
                         cloud=cloud,
-                        latencies=results.get("latenciesNs", []),
-                        wfts=results.get("wfts", []),
-                        query_times=results.get("queryTimes", []),
-                        signal_times=results.get("signalTimes", []),
+                        latencies=results.get("latenciesNs") or [],
+                        wfts=results.get("wfts") or [],
+                        query_times=results.get("queryTimes") or [],
+                        signal_times=results.get("signalTimes") or [],
                     )
 
 
