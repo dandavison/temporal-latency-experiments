@@ -197,7 +197,7 @@ def create_combined_data(
             df["LatencyMs"] = df["LatencyNs"] / 1e6
             p90 = df["LatencyMs"].quantile(0.9)
             display_name = experiment.display_name
-            df["Experiment"] = f"{display_name} p90 = {p90:.1f}ms"
+            df["Experiment"] = f"{display_name} p90 = {p90:.0f}ms"
             df["Cloud"] = "Cloud" if experiment.cloud else "Local"
             combined_data.append(df)
 
