@@ -107,17 +107,19 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
     query_df = pd.DataFrame(
         {
             "Sequence": range(len(experiment.query_times)),
-            "QueryTime": experiment.query_times,
+            "QueryTimeNs": experiment.query_times,
         }
     )
-
+    query_df["QueryTimeMs"] = query_df["QueryTimeNs"] / 1e6
     query_time_plot = (
         alt.Chart(query_df)
         .mark_line()
         .encode(
             x=alt.X("Sequence:Q", title="Sequence"),
             y=alt.Y(
-                "QueryTime:Q", title="Query Time (ms)", axis=alt.Axis(titleColor="blue")
+                "QueryTimeMs:Q",
+                title="Query Time (ms)",
+                axis=alt.Axis(titleColor="blue"),
             ),
             color=alt.value("blue"),
         )
