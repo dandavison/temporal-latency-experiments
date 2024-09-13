@@ -19,7 +19,7 @@ class Experiment:
     @property
     def display_name(self) -> str:
         display_name = self.name
-        if self.name == "signalquerypoll":
+        if self.name == "signalquery":
             display_name = "signal+query"
         return display_name
 
@@ -163,7 +163,7 @@ def create_presentation_page(experiments: List[Experiment]) -> alt.VConcatChart:
     ]:
         df = combined_df[combined_df["Cloud"] == key]
         if len(df):
-            charts.append(create_density_plot(df, display_name, x_scale))
+            charts.append(create_density_plot(df, "", x_scale))  # Remove title
 
     return alt.vconcat(*charts).resolve_scale(color="independent")
 
