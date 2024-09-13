@@ -47,6 +47,9 @@ def main() -> None:
     )
 
     create_presentation_page(experiments).save(dst_root / "presentation-results.html")
+    create_presentation_page(experiments, dark_mode=True).save(
+        dst_root / "presentation-results-dark.html"
+    )
 
 
 def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
@@ -149,13 +152,15 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConc
     return alt.vconcat(*charts).resolve_scale(color="independent")
 
 
-def create_presentation_page(experiments: List[Experiment]) -> alt.VConcatChart:
+def create_presentation_page(
+    experiments: List[Experiment], dark_mode: bool = False
+) -> alt.VConcatChart:
     cloud_experiments = [exp for exp in experiments if exp.cloud]
 
-    combined_df, xlim = create_combined_data(
+    combined_df, p999 = create_combined_data(
         cloud_experiments, filter_names=["update", "signalquery"]
     )
-    x_scale = alt.Scale(domain=[combined_df["LatencyMs"].min(), xlim])
+    x_scale = alt.Scale(domain=[combined_df["LatencyMs"].min(), p999])
 
     charts = []
     for key, display_name in [
@@ -165,7 +170,29 @@ def create_presentation_page(experiments: List[Experiment]) -> alt.VConcatChart:
         if len(df):
             charts.append(create_density_plot(df, "", x_scale))  # Remove title
 
-    return alt.vconcat(*charts).resolve_scale(color="independent")
+    chart = alt.vconcat(*charts).resolve_scale(color="independent")
+
+    if dark_mode:
+        chart = chart.configure(
+            background="#2E2E2E",
+            axis=alt.AxisConfig(
+                gridColor="#444444",
+                domainColor="#444444",
+                tickColor="white",
+                labelColor="white",
+                titleColor="white",
+            ),
+            legend=alt.LegendConfig(
+                labelColor="white",
+                titleColor="white",
+            ),
+            axisRight=alt.AxisConfig(
+                gridColor="#444444",
+                domainColor="#444444",
+            ),
+        ).configure_view(stroke=None)
+
+    return chart
 
 
 def create_density_plot(df: pd.DataFrame, title: str, x_scale: alt.Scale) -> alt.Chart:
