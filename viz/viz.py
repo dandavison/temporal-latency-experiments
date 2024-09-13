@@ -134,10 +134,8 @@ def create_per_experiment_page(experiment: Experiment) -> alt.VConcatChart:
 
 
 def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConcatChart:
-    combined_df = create_combined_data(experiments)
-    x_scale = alt.Scale(
-        domain=[combined_df["LatencyMs"].min(), combined_df["LatencyMs"].max()]
-    )
+    combined_df, p999 = create_combined_data(experiments)
+    x_scale = alt.Scale(domain=[combined_df["LatencyMs"].min(), p999])
 
     charts = []
     for key, display_name in [
@@ -154,12 +152,10 @@ def create_combined_experiments_page(experiments: List[Experiment]) -> alt.VConc
 def create_presentation_page(experiments: List[Experiment]) -> alt.VConcatChart:
     cloud_experiments = [exp for exp in experiments if exp.cloud]
 
-    combined_df = create_combined_data(
+    combined_df, p999 = create_combined_data(
         cloud_experiments, filter_names=["update", "signalquery"]
     )
-    x_scale = alt.Scale(
-        domain=[combined_df["LatencyMs"].min(), combined_df["LatencyMs"].max()]
-    )
+    x_scale = alt.Scale(domain=[combined_df["LatencyMs"].min(), p999])
 
     charts = []
     for key, display_name in [
@@ -205,7 +201,10 @@ def create_combined_data(
             df["Cloud"] = "Cloud" if experiment.cloud else "Local"
             combined_data.append(df)
 
-    return pd.concat(combined_data)
+    combined_df = pd.concat(combined_data)
+    p999 = combined_df["LatencyMs"].quantile(0.999)
+    combined_df = combined_df[combined_df["LatencyMs"] <= p999]  # Filter data
+    return combined_df, p999
 
 
 def collect_experiments(src_root: Path) -> Iterator[Experiment]:
